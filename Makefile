@@ -112,29 +112,7 @@ reset:
 # Install tools
 install-tools:
 	@echo "📦 Installing required tools..."
-	@echo ""
-	@# Check and install kubectl
-	@if ! command -v kubectl > /dev/null; then \
-		echo "Installing kubectl..."; \
-		curl -LO "https://dl.k8s.io/release/$$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"; \
-		chmod +x kubectl; \
-		sudo mv kubectl /usr/local/bin/; \
-		echo "✓ kubectl installed"; \
-	else \
-		echo "✓ kubectl already installed"; \
-	fi
-	@# Check and install kind
-	@if ! command -v kind > /dev/null; then \
-		echo "Installing kind..."; \
-		curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64; \
-		chmod +x ./kind; \
-		sudo mv ./kind /usr/local/bin/kind; \
-		echo "✓ kind installed"; \
-	else \
-		echo "✓ kind already installed"; \
-	fi
-	@echo ""
-	@echo "✅ All tools installed"
+	@./scripts/install-tools.sh
 
 # Create cluster
 create-cluster:
