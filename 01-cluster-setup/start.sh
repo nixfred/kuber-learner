@@ -127,10 +127,36 @@ read cluster_choice
 case $cluster_choice in
     1)
         echo -e "\n${CYAN}Creating a simple single-node cluster...${NC}"
-        kind create cluster --name k8s-learning
+        # Check if cluster already exists
+        if kind get clusters 2>/dev/null | grep -q "k8s-learning"; then
+            echo -e "${YELLOW}Cluster 'k8s-learning' already exists!${NC}"
+            echo -n "Delete and recreate? (y/n): "
+            read recreate
+            if [ "$recreate" = "y" ]; then
+                kind delete cluster --name k8s-learning
+                kind create cluster --name k8s-learning
+            else
+                echo -e "${GREEN}Using existing cluster${NC}"
+            fi
+        else
+            kind create cluster --name k8s-learning
+        fi
         ;;
     2)
         echo -e "\n${CYAN}Creating a multi-node cluster...${NC}"
+        # Check if cluster already exists
+        if kind get clusters 2>/dev/null | grep -q "k8s-learning"; then
+            echo -e "${YELLOW}Cluster 'k8s-learning' already exists!${NC}"
+            echo -n "Delete and recreate? (y/n): "
+            read recreate
+            if [ "$recreate" = "y" ]; then
+                kind delete cluster --name k8s-learning
+            else
+                echo -e "${GREEN}Using existing cluster${NC}"
+                pause
+                break
+            fi
+        fi
         if [ ! -f configs/multi-node.yaml ]; then
             mkdir -p configs
             cat > configs/multi-node.yaml << 'EOF'
