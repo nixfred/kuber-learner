@@ -1,0 +1,64 @@
+# Security - Never commit sensitive data
+*.key
+*.pem
+*.crt
+*.pfx
+*.p12
+.env
+.env.*
+secrets/
+credentials/
+*-secret.yaml
+*-secrets.yaml
+*.token
+kubeconfig
+.kube/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Kubernetes
+*.kubeconfig
+helm-charts/*/charts/
+helm-charts/*/values-*.yaml
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+out/
+target/
+
+# Test coverage
+coverage/
+*.coverage
+.coverage.*
+
+# Local development
+.local/
+*.local
+scratch/
