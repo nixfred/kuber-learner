@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Learning Lab - Interactive Trainer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #718096;
+            font-size: 1.2em;
+        }
+        
+        .progress-overview {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .module-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        
+        .module-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .module-card.completed::before {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #48bb78;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .module-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .module-title {
+            font-size: 1.3em;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .module-description {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .module-topics {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+        
+        .module-topics li {
+            padding: 5px 0;
+            color: #4a5568;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .module-topics li:before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+        }
+        
+        .start-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+        
+        .start-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .start-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .terminal-preview {
+            background: #1a202c;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            color: #68d391;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .terminal-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .terminal-dot.red { background: #fc5c65; }
+        .terminal-dot.yellow { background: #fed330; }
+        .terminal-dot.green { background: #2bcb88; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+        }
+        
+        .achievement-banner {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .tips-section {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .tips-section h3 {
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .close-modal {
+            float: right;
+            font-size: 2em;
+            cursor: pointer;
+            color: #718096;
+        }
+        
+        .close-modal:hover {
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Kubernetes Learning Lab</h1>
+            <p class="subtitle">Master Kubernetes with Hands-On Production-Ready Exercises</p>
+        </header>
+
+        <div class="progress-overview">
+            <h2>Your Learning Journey</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 0%">
+                    0% Complete
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="modulesCompleted">0</div>
+                    <div class="stat-label">Modules Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="exercisesDone">0</div>
+                    <div class="stat-label">Exercises Done</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="timeSpent">0h</div>
+                    <div class="stat-label">Time Invested</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="currentStreak">0</div>
+                    <div class="stat-label">Day Streak 🔥</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="achievement-banner" id="achievementBanner">
+            🎉 Achievement Unlocked! <span id="achievementText"></span>
+        </div>
+
+        <div class="tips-section">
+            <h3>💡 Pro Tips</h3>
+            <ul>
+                <li>Complete modules in order - each builds on previous concepts</li>
+                <li>Run the validation scripts after each exercise to check your work</li>
+                <li>Use the reset scripts if you need to start fresh</li>
+                <li>Check the troubleshooting guides when you encounter issues</li>
+            </ul>
+        </div>
+
+        <div class="modules-grid">
+            <!-- Module 1 -->
+            <div class="module-card" id="module-1" onclick="startModule(1)">
+                <div class="module-number">1</div>
+                <h3 class="module-title">Cluster Setup & Architecture</h3>
+                <p class="module-description">Build your first Kubernetes cluster with kind and understand core components</p>
+                <ul class="module-topics">
+                    <li>Install and configure kind</li>
+                    <li>Multi-node cluster setup</li>
+                    <li>Understanding control plane</li>
+                    <li>kubectl configuration</li>
+                </ul>
+                <button class="start-button" onclick="launchModule(1, event)">Start Learning</button>
+            </div>
+
+            <!-- Module 2 -->
+            <div class="module-card locked" id="module-2">
+                <div class="module-number">2</div>
+                <h3 class="module-title">Pods & Container Basics</h3>
+                <p class="module-description">Master pod lifecycle, debugging, and container management</p>
+                <ul class="module-topics">
+                    <li>Creating and managing pods</li>
+                    <li>Multi-container patterns</li>
+                    <li>Debugging with logs & exec</li>
+                    <li>Port forwarding</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 1 First</button>
+            </div>
+
+            <!-- Module 3 -->
+            <div class="module-card locked" id="module-3">
+                <div class="module-number">3</div>
+                <h3 class="module-title">Workload Controllers</h3>
+                <p class="module-description">Deploy applications with Deployments, StatefulSets, and DaemonSets</p>
+                <ul class="module-topics">
+                    <li>Deployments & ReplicaSets</li>
+                    <li>Rolling updates & rollbacks</li>
+                    <li>StatefulSets for databases</li>
+                    <li>Jobs & CronJobs</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 2 First</button>
+            </div>
+
+            <!-- Module 4 -->
+            <div class="module-card locked" id="module-4">
+                <div class="module-number">4</div>
+                <h3 class="module-title">Services & Networking</h3>
+                <p class="module-description">Connect applications with Services, Ingress, and Network Policies</p>
+                <ul class="module-topics">
+                    <li>Service types (ClusterIP, NodePort)</li>
+                    <li>Load balancing</li>
+                    <li>Ingress controllers</li>
+                    <li>Network policies</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 3 First</button>
+            </div>
+
+            <!-- Module 5 -->
+            <div class="module-card locked" id="module-5">
+                <div class="module-number">5</div>
+                <h3 class="module-title">Configuration & Secrets</h3>
+                <p class="module-description">Manage application configuration and sensitive data securely</p>
+                <ul class="module-topics">
+                    <li>ConfigMaps for configuration</li>
+                    <li>Secrets management</li>
+                    <li>Environment variables</li>
+                    <li>Volume mounts</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 4 First</button>
+            </div>
+
+            <!-- Module 6 -->
+            <div class="module-card locked" id="module-6">
+                <div class="module-number">6</div>
+                <h3 class="module-title">Storage Solutions</h3>
+                <p class="module-description">Implement persistent storage with PVs, PVCs, and StorageClasses</p>
+                <ul class="module-topics">
+                    <li>Persistent Volumes</li>
+                    <li>Dynamic provisioning</li>
+                    <li>Storage Classes</li>
+                    <li>StatefulSet storage</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 5 First</button>
+            </div>
+
+            <!-- Module 7 -->
+            <div class="module-card locked" id="module-7">
+                <div class="module-number">7</div>
+                <h3 class="module-title">Monitoring & Observability</h3>
+                <p class="module-description">Monitor cluster health and application performance</p>
+                <ul class="module-topics">
+                    <li>Metrics Server setup</li>
+                    <li>Resource monitoring</li>
+                    <li>Logging strategies</li>
+                    <li>Health probes</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 6 First</button>
+            </div>
+
+            <!-- Module 8 -->
+            <div class="module-card locked" id="module-8">
+                <div class="module-number">8</div>
+                <h3 class="module-title">Troubleshooting Mastery</h3>
+                <p class="module-description">Debug and fix common Kubernetes issues like a pro</p>
+                <ul class="module-topics">
+                    <li>Common failure patterns</li>
+                    <li>Debugging techniques</li>
+                    <li>Performance issues</li>
+                    <li>Chaos engineering</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 7 First</button>
+            </div>
+
+            <!-- Module 9 -->
+            <div class="module-card locked" id="module-9">
+                <div class="module-number">9</div>
+                <h3 class="module-title">Production Applications</h3>
+                <p class="module-description">Deploy real-world multi-tier applications with best practices</p>
+                <ul class="module-topics">
+                    <li>Microservices architecture</li>
+                    <li>Database deployments</li>
+                    <li>Auto-scaling strategies</li>
+                    <li>Security hardening</li>
+                </ul>
+                <button class="start-button" disabled>Complete Module 8 First</button>
+            </div>
+        </div>
+
+        <div class="terminal-preview">
+            <div class="terminal-header">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+            </div>
+            <div id="terminalOutput">
+                $ kubectl get nodes<br>
+                NAME                 STATUS   ROLES           AGE   VERSION<br>
+                kind-control-plane   Ready    control-plane   5m    v1.29.0<br>
+                kind-worker          Ready    &lt;none&gt;         4m    v1.29.0<br>
+                kind-worker2         Ready    &lt;none&gt;         4m    v1.29.0<br>
+                <br>
+                $ Ready to start your Kubernetes journey! 🚀
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Modal -->
+    <div class="modal" id="moduleModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load progress from localStorage
+        function loadProgress() {
+            const progress = localStorage.getItem('k8s-progress') || '{}';
+            return JSON.parse(progress);
+        }
+
+        // Save progress to localStorage
+        function saveProgress(data) {
+            localStorage.setItem('k8s-progress', JSON.stringify(data));
+            updateUI();
+        }
+
+        // Update UI based on progress
+        function updateUI() {
+            const progress = loadProgress();
+            const totalModules = 9;
+            const completedModules = Object.keys(progress).filter(k => progress[k].completed).length;
+            const percentage = Math.round((completedModules / totalModules) * 100);
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressBar').textContent = percentage + '% Complete';
+            document.getElementById('modulesCompleted').textContent = completedModules;
+            
+            // Update module cards
+            for (let i = 1; i <= totalModules; i++) {
+                const card = document.getElementById(`module-${i}`);
+                const button = card.querySelector('.start-button');
+                
+                if (progress[`module-${i}`]?.completed) {
+                    card.classList.add('completed');
+                    button.textContent = 'Review Module';
+                    card.classList.remove('locked');
+                } else if (i === 1 || progress[`module-${i-1}`]?.completed) {
+                    card.classList.remove('locked');
+                    button.disabled = false;
+                    button.textContent = progress[`module-${i}`]?.started ? 'Continue Learning' : 'Start Learning';
+                }
+            }
+            
+            // Calculate total exercises
+            let totalExercises = 0;
+            Object.values(progress).forEach(module => {
+                totalExercises += module.exercises || 0;
+            });
+            document.getElementById('exercisesDone').textContent = totalExercises;
+            
+            // Calculate time spent (mock data for now)
+            const hours = Math.floor(totalExercises * 0.5);
+            document.getElementById('timeSpent').textContent = hours + 'h';
+            
+            // Check achievements
+            checkAchievements(completedModules);
+        }
+
+        // Launch module in terminal
+        function launchModule(moduleNum, event) {
+            event.stopPropagation();
+            const progress = loadProgress();
+            
+            if (!progress[`module-${moduleNum}`]) {
+                progress[`module-${moduleNum}`] = { started: true, exercises: 0 };
+            }
+            
+            saveProgress(progress);
+            
+            // Show terminal command
+            const terminalOutput = document.getElementById('terminalOutput');
+            terminalOutput.innerHTML = `$ cd 0${moduleNum}-*/ && ./start.sh<br>
+🚀 Starting Module ${moduleNum} Interactive Training...<br>
+Loading exercises and validation scripts...<br>
+<br>
+Type 'help' for available commands or follow the README instructions.`;
+            
+            // Open modal with instructions
+            showModuleInstructions(moduleNum);
+        }
+
+        // Show module instructions
+        function showModuleInstructions(moduleNum) {
+            const modal = document.getElementById('moduleModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            const moduleInfo = {
+                1: {
+                    title: 'Module 1: Cluster Setup',
+                    content: `
+                        <h3>Getting Started</h3>
+                        <p>Open a terminal and navigate to the module directory:</p>
+                        <pre>cd 01-cluster-setup/</pre>
+                        
+                        <h3>Learning Objectives</h3>
+                        <ul>
+                            <li>Install kind (Kubernetes in Docker)</li>
+                            <li>Create your first cluster</li>
+                            <li>Explore cluster components</li>
+                            <li>Configure kubectl</li>
+                        </ul>
+                        
+                        <h3>Quick Start</h3>
+                        <pre>./start.sh</pre>
+                        <p>This will guide you through the setup process step by step.</p>
+                        
+                        <h3>Exercises</h3>
+                        <ol>
+                            <li>Install kind and verify installation</li>
+                            <li>Create a single-node cluster</li>
+                            <li>Create a multi-node cluster</li>
+                            <li>Explore control plane components</li>
+                        </ol>
+                    `
+                }
+            };
+            
+            modalTitle.textContent = moduleInfo[moduleNum]?.title || `Module ${moduleNum}`;
+            modalContent.innerHTML = moduleInfo[moduleNum]?.content || 'Loading module content...';
+            modal.style.display = 'flex';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('moduleModal').style.display = 'none';
+        }
+
+        // Check and show achievements
+        function checkAchievements(completedModules) {
+            const banner = document.getElementById('achievementBanner');
+            const text = document.getElementById('achievementText');
+            
+            if (completedModules === 1 && !localStorage.getItem('achievement-first')) {
+                text.textContent = 'First Steps - Completed your first module!';
+                banner.style.display = 'block';
+                localStorage.setItem('achievement-first', 'true');
+                setTimeout(() => banner.style.display = 'none', 5000);
+            } else if (completedModules === 5 && !localStorage.getItem('achievement-halfway')) {
+                text.textContent = 'Halfway There - 5 modules completed!';
+                banner.style.display = 'block';
+                localStorage.setItem('achievement-halfway', 'true');
+                setTimeout(() => banner.style.display = 'none', 5000);
+            } else if (completedModules === 9 && !localStorage.getItem('achievement-complete')) {
+                text.textContent = 'Kubernetes Master - All modules completed!';
+                banner.style.display = 'block';
+                localStorage.setItem('achievement-complete', 'true');
+                setTimeout(() => banner.style.display = 'none', 5000);
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            updateUI();
+            
+            // Update streak (mock implementation)
+            const lastVisit = localStorage.getItem('lastVisit');
+            const today = new Date().toDateString();
+            if (lastVisit !== today) {
+                localStorage.setItem('lastVisit', today);
+                const streak = parseInt(localStorage.getItem('streak') || '0') + 1;
+                localStorage.setItem('streak', streak);
+                document.getElementById('currentStreak').textContent = streak;
+            } else {
+                document.getElementById('currentStreak').textContent = localStorage.getItem('streak') || '1';
+            }
+        };
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('moduleModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
